@@ -32,12 +32,14 @@ async function pixiListo() {
 
   window.__PIXI_APP__ = app;
 
-  await PIXI.Assets.load("cubo.png");
+  await PIXI.Assets.load("tierra.png");
   await PIXI.Assets.load("piedra.png");
+  await PIXI.Assets.load("bedrock.png");
 
   mundo = new MundoIsometrico(app.stage, {
     filas: 12,
     columnas: 12,
+    alturaMaxima: 12,
     tamañoTile: { ancho: 64, alto: 32 },
     origenX: ancho / 2,
     origenY: 400
@@ -83,7 +85,6 @@ function ponerEventListeners() {
 function cuandoSeMueveElMouse(evento) {
   mouse = { x: evento.x, y: evento.y };
   if(mundo == null){return}
-  mundo.resaltarBloque(evento.x, evento.y);
 }
 function gameLoop() {
   delta = performance.now() - ultimoFrame;

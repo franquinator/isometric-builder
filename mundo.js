@@ -11,15 +11,16 @@ class MundoIsometrico {
   
         
       this.texturas = {
-        tierra: PIXI.Texture.from("cubo.png"),
-        piedra : PIXI.Texture.from("piedra.png")
+        tierra: PIXI.Texture.from("tierra.png"),
+        piedra : PIXI.Texture.from("piedra.png"),
+        bedrock : PIXI.Texture.from("bedrock.png")
         // podés sumar más: piedra, pasto, etc.
       };
   
       this.bloques = [];  // Guarda los sprites [i][j][k]
       this.matriz = [];   // Guarda el tipo de bloque [i][j][k]
   
-      this.inicializarMatriz();
+      this.inicializarMatriz(this.filas,this.columnas,this.alturaMaxima);
       this.generarMapaDesdeMatriz();
     }
   
@@ -44,35 +45,52 @@ class MundoIsometrico {
         };
       }
   
-    inicializarMatriz() {
-      for (let i = 0; i < this.filas; i++) {
+    inicializarMatriz(filas,columnas,altura) {
+      for (let i = 0; i < filas; i++) {
+        console.log(perlin.get(0, i/10) * 12);
         this.matriz[i] = [];
-        for (let j = 0; j < this.columnas; j++) {
+        for (let j = 0; j < columnas; j++) {
           this.matriz[i][j] = [];
-          this.matriz[i][j][0] = "tierra"; // bloque base
-          // podés dejarlo vacío si querés empezar sin nada
+          for (let k = 0; k < altura; k++) {
+            this.matriz[i][j][k] = this.valorSegunPerlinPos(i,j,k);
+          }
         }
       }
+      console.log(this.matriz);
+    }
+    valorSegunPerlinPos(i,j,k){
+      let alturaSuperficie = perlin.get(i/10,j/10) * 6 + 6;
+      if(k < alturaSuperficie){
+        return 1;
+      }
+      return 0;
     }
   
     generarMapaDesdeMatriz() {
-      this.bloques = [];
-  
       for (let i = 0; i < this.filas; i++) {
-        this.bloques[i] = [];
         for (let j = 0; j < this.columnas; j++) {
-          this.bloques[i][j] = [];
           for (let k = 0; k < this.matriz[i][j].length; k++) {
-            const tipo = this.matriz[i][j][k];
-            if (tipo) {
-              const sprite = this.ponerBloque(i, j, tipo, k);
-              this.bloques[i][j][k] = sprite;
+            if(this.matriz[i][j][k]  == 1){
+              this.asignarTipo(i,j,k);
+              this.ponerBloque(i,j,this.matriz[i][j][k],k)
             }
           }
         }
       }
     }
-  
+    
+    asignarTipo(i,j,k){
+      if(k < 1){
+        this.matriz[i][j][k] = "bedrock"
+        return
+      }
+      if(this.matriz[i][j][k+1]==0){
+        this.matriz[i][j][k] = "tierra";
+        return;
+      }
+      this.matriz[i][j][k] = "piedra"
+    }
+
     ponerBloque(i, j, tipo = "tierra", k = null) {
         const textura = this.texturas[tipo];
         if (!textura) {
@@ -99,8 +117,8 @@ class MundoIsometrico {
         sprite.x = pos.x;
         sprite.y = pos.y;
         sprite.anchor.set(0.5, 1);
-        sprite.width = 85;
-        sprite.height = 85;
+        sprite.width = 71;
+        sprite.height = 71;
         sprite.zIndex = i + j + k * 100;
         this.bloqueResaltado = null;
 
@@ -151,65 +169,5 @@ class MundoIsometrico {
         // Eliminar referencias
         this.bloques[i][j][k] = null;
         this.matriz[i][j][k] = null;
-    }
-    resaltarBloque(x, y) {
-        // Quitar resaltado anterior
-        // if (this.bloqueResaltado) {
-        //   this.bloqueResaltado.tint = 0xFFFFFF; // color original
-        //   this.bloqueResaltado = null;
-        // }
-      
-        // const { i, j } = this.screenToIso(x, y);
-        // const ii = Math.floor(i + 0.5);
-        // const jj = Math.floor(j + 0.5);
-      
-        // const pila = this.bloques[ii]?.[jj];
-        // if (pila && pila.length > 0) {
-        //   const sprite = pila[pila.length - 1]; // bloque más alto
-        //   sprite.tint = 0xFFFF66; // amarillo brillante
-        //   this.bloqueResaltado = sprite;
-        // }
-      }
-      clickIzquierdo(x, y) {
-        const { i, j } = this.screenToIso(x, y);
-        const ii = Math.floor(i + 0.5);
-        const jj = Math.floor(j + 0.5);
-      
-        const pila = this.bloques[ii]?.[jj];
-        if (pila && pila.length > 0) {
-          const k = pila.length - 1;
-          this.quitarBloque(ii, jj, k);
-        }
-      }
-      guardarMundo() {
-        const datos = {
-          filas: this.filas,
-          columnas: this.columnas,
-          matriz: this.matriz
-        };
-      
-        const json = JSON.stringify(datos);
-        localStorage.setItem("mundo", json);
-        console.log("Mundo guardado:", json);
-      
-        return json;
-      }
-      cargarMundo(json) {
-        try {
-          const datos = JSON.parse(localStorage.getItem("mundo"));
-      
-          this.filas = datos.filas;
-          this.columnas = datos.columnas;
-          this.matriz = datos.matriz;
-      
-          this.reiniciarMundo(); // limpia la escena
-          this.generarMapaDesdeMatriz(); // vuelve a dibujar todo
-      
-          console.log("Mundo cargado con éxito.");
-        } catch (error) {
-          console.error("Error al cargar el mundo:", error);
-        }
-      }
-      
-      
+    }     
 }
