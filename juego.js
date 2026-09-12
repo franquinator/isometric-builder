@@ -55,12 +55,12 @@ async function pixiListo() {
   hitAreaCompartido = new PIXI.Polygon(puntosBloque);
 
   mundo = new MundoIsometrico(app.stage, {
-    filas: 15,
-    columnas: 15,
+    filas: 50,
+    columnas: 50,
     alturaMaxima: 10,
     tamañoTile: { ancho: 64, alto: 32 },
     origenX: ancho / 2,
-    origenY: 300
+    origenY: 0
   });
 
   crearCursorBloque(mundo);

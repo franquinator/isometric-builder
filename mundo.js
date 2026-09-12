@@ -1,6 +1,7 @@
 class MundoIsometrico {
   constructor(stage, opciones = {}) {
 
+    this.container = new PIXI.Container();
     this.stage = stage;
     this.filas = opciones.filas || 10;
     this.columnas = opciones.columnas || 10;
@@ -8,6 +9,8 @@ class MundoIsometrico {
     this.tamañoTile = opciones.tamañoTile || { ancho: 64, alto: 32 };
     this.origenX = opciones.origenX || 400;
     this.origenY = opciones.origenY || 0;
+
+    stage.addChild(this.container);
 
 
     this.texturas = {
@@ -116,8 +119,8 @@ class MundoIsometrico {
 
     sprite.x = pos.x;
     sprite.y = pos.y;
-/*     sprite.anchor.set(0, 0);
-    sprite.anchor.set(0.5, 1); */
+    /*     sprite.anchor.set(0, 0);
+        sprite.anchor.set(0.5, 1); */
     sprite.width = 71;
     sprite.height = 71;
     sprite.zIndex = i + j + k;
@@ -128,21 +131,40 @@ class MundoIsometrico {
     sprite.eventMode = "static";
     sprite.cursor = "pointer";
     sprite.on("pointerdown", (e) => {
-      let cara = calcularCaraCliqueada(e.getLocalPosition(sprite).x,e.getLocalPosition(sprite).y)
-      console.log("¡Tocaste este sprite!", sprite, " en ",cara);
-      app.stage.removeChild(sprite);
-      sprite.destroy();
-      sprite = null;
-/*       
-      if(sprite.tint == "0xff0000"){
-        sprite.tint = "0xffffff"
+      if (e.button === 0) {
+        app.stage.removeChild(sprite);
+        sprite.destroy();
+        /* sprite = null; */
+      } else if (e.button === 2) {
+        let cara = calcularCaraCliqueada(e.getLocalPosition(sprite).x, e.getLocalPosition(sprite).y)
+        switch (cara) {
+          case "izquierda":
+            this.ponerBloque(i, j + 1, "tierra", k)
+            break;
+          case "derecha":
+            this.ponerBloque(i + 1, j, "tierra", k)
+            break;
+          case "arriba":
+            this.ponerBloque(i, j, "tierra", k + 1)
+            break;
+          default:
+            break;
+        }
+        console.log("¡Tocaste este sprite!", sprite, " en ", cara);
       }
-      else{
-        sprite.tint = "0xff0000"
-      } */
+
+
+
+      /*       
+            if(sprite.tint == "0xff0000"){
+              sprite.tint = "0xffffff"
+            }
+            else{
+              sprite.tint = "0xff0000"
+            } */
     });
 
-    this.stage.addChild(sprite);
+    this.container.addChild(sprite);
 
     // Guardar el sprite
     if (!this.bloques[i]) this.bloques[i] = [];
@@ -159,7 +181,7 @@ class MundoIsometrico {
         for (let columna of fila) {
           if (columna) {
             for (let sprite of columna) {
-              if (sprite) this.stage.removeChild(sprite);
+              if (sprite) this.container.removeChild(sprite);
             }
           }
         }
@@ -177,7 +199,7 @@ class MundoIsometrico {
     if (!sprite) return;
 
     // Eliminar sprite del escenario
-    this.stage.removeChild(sprite);
+    this.container.removeChild(sprite);
 
     // Eliminar referencias
     this.bloques[i][j][k] = null;
@@ -186,23 +208,23 @@ class MundoIsometrico {
 }
 
 //funciones random de chatgpt para calcular que cara del cubo hice click segun funciones lineales
-function calcularCaraCliqueada(x,y) {
+function calcularCaraCliqueada(x, y) {
   if (x <= 150) {
     // Tramo de subida (Pendiente m = 0.4074)
     //si arriba a la izquierda
-    if( 0.407407 * (x - 15) + 70 >= y){
+    if (0.407407 * (x - 15) + 70 >= y) {
       return "arriba";
     }
-    else{
+    else {
       return "izquierda";
     }
   } else {
     // Tramo de bajada (Pendiente m = -0.4074)
     //si arriba a la derecha
-    if( -0.407407 * (x - 150) + 125 >= y){
+    if (-0.407407 * (x - 150) + 125 >= y) {
       return "arriba";
     }
-    else{
+    else {
       return "derecha";
     }
   }
