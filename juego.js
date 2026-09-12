@@ -19,7 +19,19 @@ let tipoBloque = "tierra";
 let cursorBloque;       // el sprite
 let cursorPos = { i: 0, j: 0, k: 0 }; // posición actual
 
-app.init({width: ancho, height: alto }).then(() => {
+const puntosBloque = [
+  150, 0,   // Punta superior
+  285, 70,  // Esquina derecha
+  285, 230,  // Esquina inferior derecha
+  150, 300,  // Punta inferior
+  15, 230,   // Esquina inferior izquierda
+  15, 70    // Esquina izquierda
+];
+
+// 2. CREAR UN SOLO POLÍGONO EN MEMORIA PARA TODOS
+let hitAreaCompartido;
+
+app.init({ width: ancho, height: alto }).then(() => {
   pixiListo();
 });
 
@@ -27,6 +39,10 @@ async function pixiListo() {
   console.log("pixi listo");
 
   document.body.appendChild(app.canvas);
+
+  app.canvas.addEventListener('contextmenu', function (evento) {
+    evento.preventDefault();
+  });
 
   ponerEventListeners();
 
@@ -36,22 +52,64 @@ async function pixiListo() {
   await PIXI.Assets.load("piedra.png");
   await PIXI.Assets.load("bedrock.png");
 
+  hitAreaCompartido = new PIXI.Polygon(puntosBloque);
+
   mundo = new MundoIsometrico(app.stage, {
-    filas: 12,
-    columnas: 12,
-    alturaMaxima: 12,
+    filas: 15,
+    columnas: 15,
+    alturaMaxima: 10,
     tamañoTile: { ancho: 64, alto: 32 },
     origenX: ancho / 2,
-    origenY: 400
+    origenY: 300
   });
 
   crearCursorBloque(mundo);
 
   ultimoFrame = performance.now();
 
+  /*   let textura = PIXI.Texture.from("piedra.png"); */
+  /*   crearBloque(0, 0, textura); */
+
+
+
   app.ticker.add(() => gameLoop());
 }
+/* function crearBloque(x, y, textura) {
 
+
+  // 3. CREAR UNA SOLA PLANTILLA VISUAL (Se dibuja una sola vez)
+  const plantillaVisual = new PIXI.Graphics();
+  plantillaVisual.poly(puntosBloque);
+  plantillaVisual.fill({ color: 0x00ff00, alpha: 0.3 });
+  plantillaVisual.stroke({ color: 0x00ff00, width: 1.5 });
+  plantillaVisual.x = x;
+  plantillaVisual.y = y;
+  const bloque = new PIXI.Sprite(textura);
+  bloque.x = x;
+  bloque.y = y;
+  bloque.scale.set(.3, 0.3);
+
+  bloque.eventMode = 'static';
+
+  bloque.on("pointerdown", () => {
+    console.log("¡Tocaste este sprite!", bloque);
+    bloque.tint = "0xff0000"
+  });
+
+  // ASIGNACIÓN REUTILIZABLE: No duplica peso en memoria
+  bloque.hitArea = hitAreaCompartido;
+
+  // VISUALIZACIÓN EFICIENTE: Clonamos la plantilla (es instantáneo)
+  const miVisualizador = plantillaVisual.clone();
+  bloque.addChild(miVisualizador);
+
+  // Tu evento limpio y sin ifs
+  bloque.on('pointerdown', () => {
+    console.log(`Bloque tocado en: ${x}, ${y}`);
+  });
+
+  mundo.stage.addChild(bloque);
+} */
 function ponerEventListeners() {
   window.onmousemove = (evento) => {
     cuandoSeMueveElMouse(evento);
@@ -67,24 +125,33 @@ function ponerEventListeners() {
   // });
   window.addEventListener("keydown", (e) => {
     switch (e.key) {
-      case "1":          tipoBloque = "tierra"; break;
-      case "2":          tipoBloque = "piedra"; break;
-      case "ArrowUp":    cursorPos.j--; break;
-      case "ArrowDown":  cursorPos.j++; break;
-      case "ArrowLeft":  cursorPos.i--; break;
-      case "ArrowRight": cursorPos.i++; break;
-      case "PageUp":     cursorPos.k++; break;     // subir
-      case "PageDown":   cursorPos.k = Math.max(0, cursorPos.k - 1); break; // bajar
-      case " ":          mundo.ponerBloque(cursorPos.i, cursorPos.j, tipoBloque, cursorPos.k); break;
-      case "Delete":     mundo.quitarBloque(cursorPos.i, cursorPos.j, cursorPos.k); break;
+      case "1": tipoBloque = "tierra"; break;
+      case "2": tipoBloque = "piedra"; break;
+      case " ": mundo.ponerBloque(cursorPos.i, cursorPos.j, tipoBloque, cursorPos.k); break;
+      case "Delete": mundo.quitarBloque(cursorPos.i, cursorPos.j, cursorPos.k); break;
     }
-    actualizarCursorBloque(mundo); // ← asegurate de tener referencia al mundo
+    actualizarCursorBloque(mundo);
   });
 }
 
 function cuandoSeMueveElMouse(evento) {
-  mouse = { x: evento.x, y: evento.y };
-  if(mundo == null){return}
+  mouse = { x: evento.clientX, y: evento.clientY };
+  if (mundo == null) return;
+
+  const iso = mundo.screenToIso(mouse.x, mouse.y);
+  let i = Math.floor(iso.i);
+  let j = Math.floor(iso.j);
+
+  i = Math.max(0, Math.min(mundo.filas - 1, i));
+  j = Math.max(0, Math.min(mundo.columnas - 1, j));
+
+  cursorPos.i = i;
+  cursorPos.j = j;
+
+  const columna = mundo.matriz[i]?.[j];
+  cursorPos.k = columna ? columna.length : 0;
+
+  actualizarCursorBloque(mundo);
 }
 function gameLoop() {
   delta = performance.now() - ultimoFrame;
