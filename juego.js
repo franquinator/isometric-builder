@@ -127,6 +127,10 @@ function ponerEventListeners() {
     switch (e.key) {
       case "1": tipoBloque = "tierra"; break;
       case "2": tipoBloque = "piedra"; break;
+      case "ArrowLeft": mundo.moverAIzquierda(); break;
+      case "ArrowRight": mundo.moverADerecha(); break;
+      case "ArrowUp": mundo.moverAArriba(); break;
+      case "ArrowDown": mundo.moverAAbajo(); break;
       case " ": mundo.ponerBloque(cursorPos.i, cursorPos.j, tipoBloque, cursorPos.k); break;
       case "Delete": mundo.quitarBloque(cursorPos.i, cursorPos.j, cursorPos.k); break;
     }

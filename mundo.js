@@ -1,6 +1,6 @@
 class MundoIsometrico {
   constructor(stage, opciones = {}) {
-
+    this.vel = 10;
     this.container = new PIXI.Container();
     this.stage = stage;
     this.filas = opciones.filas || 10;
@@ -25,6 +25,20 @@ class MundoIsometrico {
 
     this.inicializarMatriz(this.filas, this.columnas, this.alturaMaxima);
     this.generarMapaDesdeMatriz();
+  }
+  moverAIzquierda(){
+    this.container.position.x += this.vel;
+  }
+  moverAAbajo(){
+    this.container.position.y -= this.vel;
+  }
+
+  moverAArriba(){
+    this.container.position.y += this.vel;
+  }
+
+  moverADerecha(){
+    this.container.position.x -= this.vel;
   }
 
   isoToScreen(i, j, k = 0) {
